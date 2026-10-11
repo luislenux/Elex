@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Elex</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    body { background-color: #000000; color: #ffffff; padding-bottom: 70px; }
+    
+    header {
+      position: sticky; top: 0; z-index: 100;
+      background: #000000; border-bottom: 1px solid #1a1a1a;
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 12px 16px;
+    }
+    .logo { color: #00f2fe; font-size: 22px; font-weight: 900; letter-spacing: 1px; }
+
+    .container { max-width: 480px; margin: 0 auto; padding: 10px; }
+    .card { background: #0f172a; border: 1px solid #1e293b; border-radius: 12px; padding: 14px; margin-bottom: 14px; }
+    .hidden { display: none !important; }
+
+    input, button, textarea, select {
+      width: 100%; padding: 12px; margin-top: 8px; border-radius: 8px;
+      border: 1px solid #1e293b; background-color: #070a12; color: #ffffff; font-size: 14px; outline: none;
+    }
+
+    button { background: #00f2fe; color: #000; font-weight: bold; border: none; cursor: pointer; }
+    .btn-sec { background: transparent; border: 1px solid #00f2fe; color: #00f2fe; }
+
+    .bottom-nav {
+      position: fixed; bottom: 0; left: 0; right: 0; height: 60px;
+      background: #000000; border-top: 1px solid #1c1c1e;
+      display: flex; justify-space-around; align-items: center;
+      z-index: 1000; max-width: 480px; margin: 0 auto;
+    }
+
+    .nav-item { background: transparent; border: none; padding: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .nav-item svg { width: 26px; height: 26px; fill: none; stroke: #ffffff; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .nav-item.active svg { stroke: #00f2fe; fill: rgba(0, 242, 254, 0.1); }
+
+    .profile-nav-btn { position: relative; width: 30px; height: 30px; }
+    .profile-nav-badge { position: absolute; bottom: -2px; right: -2px; width: 10px; height: 10px; background: #ff3b30; border-radius: 50%; border: 2px solid #000; }
+
+    .avatar-small { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 1px solid #00f2fe; background: #1e293b; }
+    .avatar-default-svg { width: 36px; height: 36px; border-radius: 50%; background: #334155; border: 1px solid #00f2fe; display: flex; align-items: center; justify-content: center; }
+
+    .stories-bar { display: flex; gap: 12px; overflow-x: auto; padding: 6px 0; }
+    .story-item { text-align: center; font-size: 11px; color: #94a3b8; cursor: pointer; flex-shrink: 0; }
+    .story-ring { width: 56px; height: 56px; border-radius: 50%; border: 2px solid #00f2fe; padding: 2px; }
+
+    .chat-header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 10px; background: #070a12; border-bottom: 1px solid #1e293b; border-radius: 8px 8px 0 0;
+    }
+    .chat-header-actions { display: flex; gap: 10px; }
+    .chat-header-btn { background: transparent; border: none; width: auto; padding: 4px; cursor: pointer; }
+    .chat-header-btn svg { width: 22px; height: 22px; stroke: #00f2fe; fill: none; stroke-width: 2; }
+
+    .chat-box { height: 260px; overflow-y: auto; background: #070a12; border: 1px solid #1e293b; border-top: none; padding: 10px; border-radius: 0 0 8px 8px; }
+    .chat-msg { margin-bottom: 8px; font-size: 13px; }
+    .chat-msg b { color: #00f2fe; }
+
+    .media-preview { width: 100%; border-radius: 10px; margin-top: 8px; max-height: 320px; object-fit: cover; border: 1px solid #1e293b; }
+    video { width: 100%; border-radius: 8px; background: #000; margin-top: 8px; }
+    
+    /* MODAL DE ANÚNCIO EM VÍDEO */
+    .ad-modal {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.95); z-index: 2000;
+      display: flex; flex-direction: column; justify-content: center; align-items: center;
+      padding: 20px; text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="logo">ELEX</div>
+    <div id="header-user" style="font-size: 12px; color: #00f2fe;"></div>
+  </header>
+
+  <div class="container">
+
+    <div id="auth-section" class="card">
+      <h3 style="text-align: center; color: #00f2fe; margin-bottom: 10px;">Aceder ao Elex</h3>
+      <input type="text" id="username" placeholder="Nome de utilizador">
+      <input type="password" id="password" placeholder="Palavra-passe">
+      <p style="font-size: 11px; color: #94a3b8; margin-top: 8px;">Foto de Perfil:</p>
+      <input type="file" id="profile-file" accept="image/*">
+      <button onclick="login()">Entrar</button>
+      <button class="btn-sec" onclick="register()" style="margin-top: 8px;">Criar Conta</button>
+    </div>
+
+    <div id="app-section" class="hidden">
+
+      <div id="sec-home">
+        <div class="card">
+          <div class="stories-bar" id="stories-bar">
+            <div class="story-item" onclick="document.getElementById('story-file-input').click()">
+              <div class="story-ring" style="display:flex; align-items:center; justify-content:center; background:#1e293b; color:#00f2fe; font-size:22px;">+</div>
+              <span>Novo Story</span>
+            </div>
+            <input type="file" id="story-file-input" accept="image/*,video/*" class="hidden" onchange="uploadStory(this)">
+          </div>
+        </div>
+
+        <div class="card">
+          <h4 style="color: #00f2fe;">Nova Publicação</h4>
+          <textarea id="post-content" rows="2" placeholder="O que queres partilhar?"></textarea>
+          <input type="file" id="post-file-input" accept="image/*,video/*">
+          <button onclick="createPost()" style="margin-top: 8px;">Publicar</button>
+        </div>
+
+        <div class="card">
+          <h4 style="color: #00f2fe; margin-bottom: 10px;">Feed Principal</h4>
+          <div id="posts-container"></div>
+        </div>
+      </div>
+
+      <div id="sec-reels" class="hidden">
+        <div class="card">
+          <h4 style="color: #00f2fe; margin-bottom: 10px;">Vídeos & Reels</h4>
+          <div id="reels-container"></div>
+        </div>
+      </div>
+
+      <div id="sec-direct" class="hidden">
+        <div class="card">
+          <h4 style="color: #00f2fe; margin-bottom: 8px;">Minhas Conversas</h4>
+          <select id="chat-target-select" onchange="openSelectedChat()">
+            <option value="">Selecione um utilizador ou grupo...</option>
+          </select>
+        </div>
+
+        <div id="active-chat-card" class="card hidden">
+          <div class="chat-header">
+            <span id="chat-header-title" style="font-weight: bold; color: #00f2fe;"></span>
+            <div class="chat-header-actions">
+              <button class="chat-header-btn" title="Ligar (Vídeo)" onclick="startCallFromChat('video')">
+                <svg viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
+              </button>
+              <button class="chat-header-btn" title="Transmitir Tela" onclick="startCallFromChat('screen')">
+                <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+              </button>
+            </div>
+          </div>
+
+          <div id="chat-box" class="chat-box"></div>
+          <input type="text" id="chat-input" placeholder="Escreva uma mensagem...">
+          <button onclick="sendMessage()" style="margin-top: 8px;">Enviar</button>
+        </div>
+
+        <div id="call-active-area" class="card hidden">
+          <h4 style="color: #00f2fe;">Chamada em Curso</h4>
+          <video id="localVideo" autoplay playsinline muted></video>
+          <video id="remoteVideo" autoplay playsinline></video>
+        </div>
+      </div>
+
+      <div id="sec-search" class="hidden">
+        <div class="card">
+          <h4 style="color: #00f2fe;">Pesquisar Utilizador</h4>
+          <input type="text" id="search-input" placeholder="Digite o nome..." oninput="searchUsers()">
+          <div id="search-results" style="margin-top: 10px;"></div>
+        </div>
+      </div>
+
+      <div id="sec-profile" class="hidden">
+        <div class="card" style="text-align: center;">
+          <div id="profile-avatar-box" style="margin-bottom: 8px;"></div>
+          <h3 id="profile-username-text" style="color: #00f2fe;"></h3>
+        </div>
+
+        <div class="card">
+          <div style="background: rgba(0,242,254,0.05); border: 1px solid rgba(0,242,254,0.25); border-radius: 10px; padding: 12px; text-align: center;">
+            <div style="font-size: 11px; color: #94a3b8;">SALDO DISPONÍVEL</div>
+            <div style="font-size: 26px; font-weight: 800; color: #00f2fe;" id="user-balance">R$ 0.00</div>
+            <div style="font-size: 12px; color: #94a3b8;">Ciclo Atual: <b id="ads-count" style="color:#00f2fe;">0</b>/10</div>
+          </div>
+
+          <button onclick="startAdSession()" style="margin-top: 10px; background: #00f2fe;">🎥 Ver Anúncio (+1 para o saldo)</button>
+          <button onclick="startAutoAdSession()" class="btn-sec" style="margin-top: 8px;">▶️ MODO AUTOMÁTICO (Assistir Vários)</button>
+
+          <hr style="border: 0; border-top: 1px solid #1e293b; margin: 12px 0;">
+          <h4>Solicitar Saque PIX</h4>
+          <input type="text" id="pix-key" placeholder="Chave PIX">
+          <button onclick="requestPayout()" style="margin-top: 8px;">Sacar (Mínimo R$ 0,50)</button>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <div id="ad-modal" class="ad-modal hidden">
+    <h3 style="color: #00f2fe; margin-bottom: 10px;">Anúncio Patrocinado</h3>
+    <p style="font-size: 13px; color: #94a3b8; margin-bottom: 15px;">Aguarde o anúncio terminar para creditar no seu saldo...</p>
+    <div style="width: 100%; height: 180px; background: #1e293b; border-radius: 10px; display: flex; align-items: center; justify-content: center; border: 1px solid #00f2fe;">
+      <span id="ad-timer" style="font-size: 32px; font-weight: bold; color: #00f2fe;">5s</span>
+    </div>
+    <p id="ad-auto-status" style="font-size: 12px; color: #00f2fe; margin-top: 15px;"></p>
+    <button id="ad-close-btn" onclick="closeAdModal()" class="hidden" style="margin-top: 15px;">Fechar Anúncio</button>
+  </div>
+
+  <div id="bottom-bar" class="bottom-nav hidden">
+    <button class="nav-item active" id="btn-nav-home" onclick="navTo('home')">
+      <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+    </button>
+    <button class="nav-item" id="btn-nav-reels" onclick="navTo('reels')">
+      <svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M10 15l5-3-5-3v6z" fill="#ffffff"></path></svg>
+    </button>
+    <button class="nav-item" id="btn-nav-direct" onclick="navTo('direct')">
+      <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+    </button>
+    <button class="nav-item" id="btn-nav-search" onclick="navTo('search')">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+    </button>
+    <button class="nav-item" id="btn-nav-profile" onclick="navTo('profile')">
+      <div class="profile-nav-btn">
+        <div id="nav-avatar-box"></div>
+        <div class="profile-nav-badge"></div>
+      </div>
+    </button>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    let currentUser = null;
+    let currentProfilePic = '';
+    let currentChatType = null;
+    let currentChatTarget = null;
+    let autoPlayMode = false;
+
+    const DEFAULT_AVATAR = `<div class="avatar-default-svg"><svg viewBox="0 0 24 24" width="20" height="20" fill="#ffffff"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div>`;
+
+    function getAvatar(url) {
+      if(url && url.length > 5) return `<img src="${url}" class="avatar-small">`;
+      return DEFAULT_AVATAR;
+    }
+
+    function navTo(tab) {
+      ['home', 'reels', 'direct', 'search', 'profile'].forEach(t => {
+        document.getElementById(`sec-${t}`).classList.add('hidden');
+        document.getElementById(`btn-nav-${t}`).classList.remove('active');
+      });
+      document.getElementById(`sec-${tab}`).classList.remove('hidden');
+      document.getElementById(`btn-nav-${tab}`).classList.add('active');
+
+      if(tab === 'home') { loadStories(); loadPosts(); }
+      if(tab === 'reels') loadReels();
+      if(tab === 'direct') loadChatTargets();
+    }
+
+    function getBase64(file) {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+      });
+    }
+
+    async function login() {
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value.trim();
+      if(!username || !password) return alert('Preencha os campos!');
+
+      const fileInput = document.getElementById('profile-file');
+      let profilePic = '';
+      if(fileInput.files.length > 0) profilePic = await getBase64(fileInput.files[0]);
+
+      const res = await fetch('/api/login', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      const data = await res.json();
+      if(data.success) {
+        currentUser = data.username;
+        currentProfilePic = data.profilePic || profilePic;
+
+        document.getElementById('auth-section').classList.add('hidden');
+        document.getElementById('app-section').classList.remove('hidden');
+        document.getElementById('bottom-bar').classList.remove('hidden');
+
+        document.getElementById('header-user').innerText = `@${currentUser}`;
+        document.getElementById('profile-username-text').innerText = `@${currentUser}`;
+        document.getElementById('profile-avatar-box').innerHTML = getAvatar(currentProfilePic);
+        document.getElementById('nav-avatar-box').innerHTML = getAvatar(currentProfilePic);
+
+        document.getElementById('user-balance').innerText = `R$ ${data.balance}`;
+        document.getElementById('ads-count').innerText = data.adsWatched;
+
+        navTo('home');
+      } else { alert(data.error); }
+    }
+
+    async function register() {
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value.trim();
+      const fileInput = document.getElementById('profile-file');
+      let profilePic = '';
+      if(fileInput.files.length > 0) profilePic = await getBase64(fileInput.files[0]);
+
+      const res = await fetch('/api/register', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password, profilePic })
+      });
+      const data = await res.json();
+      alert(data.message || data.error);
+    }
+
+    // --- ANÚNCIOS MULTIPLOS E AUTOMÁTICOS ---
+    function startAdSession() {
+      autoPlayMode = false;
+      showAdModal();
+    }
+
+    function startAutoAdSession() {
+      autoPlayMode = true;
+      showAdModal();
+    }
+
+    function showAdModal() {
+      document.getElementById('ad-modal').classList.remove('hidden');
+      document.getElementById('ad-close-btn').classList.add('hidden');
+      document.getElementById('ad-auto-status').innerText = autoPlayMode ? "Modo Automático Ativo" : "";
+      
+      let timeLeft = 3;
+      document.getElementById('ad-timer').innerText = `${timeLeft}s`;
+
+      const timer = setInterval(() => {
+        timeLeft--;
+        if(timeLeft > 0) {
+          document.getElementById('ad-timer').innerText = `${timeLeft}s`;
+        } else {
+          clearInterval(timer);
+          document.getElementById('ad-timer').innerText = "✓ Concluído";
+          registerAdWatch();
+        }
+      }, 1000);
+    }
+
+    async function registerAdWatch() {
+      const res = await fetch('/api/watch-ad', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: currentUser })
+      });
+      const data = await res.json();
+      if(data.success) {
+        document.getElementById('ads-count').innerText = data.adsWatched;
+        document.getElementById('user-balance').innerText = `R$ ${data.balance}`;
+        
+        if(autoPlayMode) {
+          setTimeout(() => { showAdModal(); }, 1000);
+        } else {
+          document.getElementById('ad-close-btn').classList.remove('hidden');
+        }
+      }
+    }
+
+    function closeAdModal() {
+      autoPlayMode = false;
+      document.getElementById('ad-modal').classList.add('hidden');
+    }
+
+    // --- STORIES & FEED ---
+    async function uploadStory(input) {
+      if(!input.files || !input.files[0]) return;
+      const file = input.files[0];
+      const mediaUrl = await getBase64(file);
+      const mediaType = file.type.startsWith('video') ? 'video' : 'image';
+
+      const res = await fetch('/api/stories', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ author: currentUser, authorPic: currentProfilePic, mediaUrl, mediaType })
+      });
+      const data = await res.json();
+      if(data.success) loadStories();
+    }
+
+    async function loadStories() {
+      const res = await fetch('/api/stories');
+      const data = await res.json();
+      if(data.success) {
+        const bar = document.getElementById('stories-bar');
+        bar.innerHTML = `
+          <div class="story-item" onclick="document.getElementById('story-file-input').click()">
+            <div class="story-ring" style="display:flex; align-items:center; justify-content:center; background:#1e293b; color:#00f2fe; font-size:22px;">+</div>
+            <span>Novo Story</span>
+          </div>`;
+        data.stories.forEach(s => {
+          bar.innerHTML += `
+            <div class="story-item">
+              <div class="story-ring">${getAvatar(s.authorPic)}</div>
+              <span>@${s.author}</span>
+            </div>`;
+        });
+      }
+    }
+
+    async function createPost() {
+      const content = document.getElementById('post-content').value.trim();
+      const fileInput = document.getElementById('post-file-input');
+
+      let mediaUrl = '';
+      let mediaType = 'image';
+
+      if(fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        mediaUrl = await getBase64(file);
+        mediaType = file.type.startsWith('video') ? 'video' : 'image';
+      }
+
+      if(!content && !mediaUrl) return alert('Escreva um texto ou anexe uma foto/vídeo!');
+
+      const res = await fetch('/api/posts', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ author: currentUser, authorPic: currentProfilePic, content, mediaUrl, mediaType })
+      });
+      const data = await res.json();
+      if(data.success) {
+        document.getElementById('post-content').value = '';
+        fileInput.value = '';
+        loadPosts();
+      }
+    }
+
+    async function loadPosts() {
+      const res = await fetch('/api/posts');
+      const data = await res.json();
+      if(data.success) {
+        const container = document.getElementById('posts-container');
+        container.innerHTML = '';
+        data.posts.forEach(p => {
+          let media = p.mediaUrl ? (p.mediaType === 'video' ? `<video src="${p.mediaUrl}" controls class="media-preview"></video>` : `<img src="${p.mediaUrl}" class="media-preview">`) : '';
+          container.innerHTML += `
+            <div style="border-bottom:1px solid #1e293b; padding:12px 0;">
+              <div style="display:flex; align-items:center; gap:8px;">${getAvatar(p.authorPic)} <b style="color:#00f2fe;">@${p.author}</b></div>
+              <p style="margin-top:6px; font-size:13px;">${p.content}</p>
+              ${media}
+            </div>`;
+        });
+      }
+    }
+
+    async function loadReels() {
+      const res = await fetch('/api/posts');
+      const data = await res.json();
+      if(data.success) {
+        const container = document.getElementById('reels-container');
+        container.innerHTML = '';
+        const videoPosts = data.posts.filter(p => p.mediaType === 'video' && p.mediaUrl);
+        if(!videoPosts.length) { container.innerHTML = '<p style="color:#64748b; font-size:12px;">Nenhum vídeo publicado ainda.</p>'; return; }
+        videoPosts.forEach(p => {
+          container.innerHTML += `<div style="margin-bottom:15px;"><b>@${p.author}</b><video src="${p.mediaUrl}" controls autoplay loop muted style="width:100%; border-radius:10px;"></video></div>`;
+        });
+      }
+    }
+
+    async function loadChatTargets() {
+      const select = document.getElementById('chat-target-select');
+      select.innerHTML = '<option value="">Selecione um utilizador ou grupo...</option>';
+
+      const gRes = await fetch(`/api/groups/list/${currentUser}`);
+      const gData = await gRes.json();
+      if(gData.success && gData.groups.length) {
+        const groupOpt = document.createElement('optgroup');
+        groupOpt.label = "Grupos";
+        gData.groups.forEach(g => {
+          groupOpt.innerHTML += `<option value="group:${g._id}:${g.name}">👥 ${g.name}</option>`;
+        });
+        select.appendChild(groupOpt);
+      }
+    }
+
+    function openSelectedChat() {
+      const val = document.getElementById('chat-target-select').value;
+      if(!val) {
+        document.getElementById('active-chat-card').classList.add('hidden');
+        return;
+      }
+      const parts = val.split(':');
+      currentChatType = parts[0];
+      currentChatTarget = parts[1];
+
+      document.getElementById('active-chat-card').classList.remove('hidden');
+      document.getElementById('chat-header-title').innerText = parts[2] ? `Grupo: ${parts[2]}` : `@${currentChatTarget}`;
+      document.getElementById('chat-box').innerHTML = '';
+
+      if(currentChatType === 'direct') {
+        const roomKey = [currentUser, currentChatTarget].sort().join('_');
+        socket.emit('join_room', roomKey);
+        fetch(`/api/messages/direct/${currentUser}/${currentChatTarget}`)
+          .then(r => r.json()).then(d => { if(d.success) d.messages.forEach(m => renderMessage(m.from, m.text)); });
+      } else if(currentChatType === 'group') {
+        socket.emit('join_room', currentChatTarget);
+        fetch(`/api/groups/messages/${currentChatTarget}`)
+          .then(r => r.json()).then(d => { if(d.success) d.messages.forEach(m => renderMessage(m.sender, m.text)); });
+      }
+    }
+
+    function sendMessage() {
+      const text = document.getElementById('chat-input').value.trim();
+      if(!text || !currentChatTarget) return;
+
+      if(currentChatType === 'direct') {
+        socket.emit('send_direct_message', { from: currentUser, to: currentChatTarget, text });
+      } else if(currentChatType === 'group') {
+        socket.emit('send_group_message', { groupId: currentChatTarget, sender: currentUser, text });
+      }
+      document.getElementById('chat-input').value = '';
+    }
+
+    function renderMessage(sender, text) {
+      const chatBox = document.getElementById('chat-box');
+      const isMe = sender === currentUser;
+      chatBox.innerHTML += `<div class="chat-msg"><b>${isMe ? 'Você' : '@' + sender}:</b> ${text}</div>`;
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    async function startCallFromChat(type) {
+      if(!currentChatTarget) return alert('Abra uma conversa primeiro!');
+      
+      document.getElementById('call-active-area').classList.remove('hidden');
+      const roomKey = currentChatType === 'direct' ? [currentUser, currentChatTarget].sort().join('_') : currentChatTarget;
+
+      socket.emit('join_room', roomKey);
+
+      if(type === 'video') {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        document.getElementById('localVideo').srcObject = stream;
+      } else if(type === 'screen') {
+        const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+        document.getElementById('localVideo').srcObject = stream;
+      }
+    }
+
+    async function searchUsers() {
+      const q = document.getElementById('search-input').value.trim();
+      if(!q) return;
+      const res = await fetch(`/api/users/search/${q}`);
+      const data = await res.json();
+      if(data.success) {
+        const box = document.getElementById('search-results');
+        box.innerHTML = '';
+        data.users.forEach(u => {
+          if(u.username !== currentUser) {
+            box.innerHTML += `
+              <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid #1e293b;">
+                <div style="display:flex; align-items:center; gap:8px;">${getAvatar(u.profilePic)} <span>@${u.username}</span></div>
+                <button style="width:auto; padding:4px 10px; font-size:11px;" onclick="startChatFromSearch('${u.username}')">Conversar</button>
+              </div>`;
+          }
+        });
+      }
+    }
+
+    function startChatFromSearch(targetUser) {
+      navTo('direct');
+      currentChatType = 'direct';
+      currentChatTarget = targetUser;
+      document.getElementById('active-chat-card').classList.remove('hidden');
+      document.getElementById('chat-header-title').innerText = `@${targetUser}`;
+      document.getElementById('chat-box').innerHTML = '';
+      const roomKey = [currentUser, currentChatTarget].sort().join('_');
+      socket.emit('join_room', roomKey);
+      fetch(`/api/messages/direct/${currentUser}/${currentChatTarget}`)
+        .then(r => r.json()).then(d => { if(d.success) d.messages.forEach(m => renderMessage(m.from, m.text)); });
+    }
+
+    async function requestPayout() {
+      const pixKey = document.getElementById('pix-key').value.trim();
+      if(!pixKey) return alert('Digite a sua chave PIX!');
+      const res = await fetch('/api/request-payout', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: currentUser, pixKey })
+      });
+      const data = await res.json();
+      alert(data.message || data.error);
+      if(data.success) document.getElementById('user-balance').innerText = 'R$ 0.00';
+    }
+
+    socket.on('receive_direct_message', (m) => { if(currentChatType === 'direct') renderMessage(m.from, m.text); });
+    socket.on('receive_group_message', (m) => { if(currentChatType === 'group') renderMessage(m.sender, m.text); });
+  </script>
+</body>
+</html>
