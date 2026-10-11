@@ -12,10 +12,9 @@ app.use(express.static(__dirname));
 const MONGO_URI = 'mongodb+srv://luislinux1221_db_user:oRDh9Xhvs45jaA8W@cluster0.tsjbjdo.mongodb.net/elexdb?retryWrites=true&w=majority&appName=Cluster0';
 
 mongoose.connect(MONGO_URI)
-  .then(() => console.log('✅ Conectado ao MongoDB Atlas com sucesso!'))
-  .catch(err => console.error('❌ Erro ao conectar no MongoDB:', err));
+.then(() => console.log('✅ Conectado ao MongoDB Atlas com sucesso!'))
+.catch(err => console.error('❌ Erro ao conectar no MongoDB:', err));
 
-// Schema de Utilizador com Foto de Perfil
 const userSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
   password: { type: String, required: true },
@@ -27,17 +26,15 @@ const userSchema = new mongoose.Schema({
 });
 const User = mongoose.model('User', userSchema);
 
-// Schema de Stories
 const storySchema = new mongoose.Schema({
   author: { type: String, required: true },
   authorPic: { type: String, default: '' },
   mediaUrl: { type: String, required: true },
-  mediaType: { type: String, default: 'image' }, // 'image' ou 'video'
-  createdAt: { type: Date, default: Date.now, expires: 86400 } // Apaga após 24h
+  mediaType: { type: String, default: 'image' },
+  createdAt: { type: Date, default: Date.now, expires: 86400 }
 });
 const Story = mongoose.model('Story', storySchema);
 
-// Schema de Mensagens Diretas (Pesquisa direta, sem necessidade de amigos)
 const directMessageSchema = new mongoose.Schema({
   from: { type: String, required: true },
   to: { type: String, required: true },
@@ -46,7 +43,6 @@ const directMessageSchema = new mongoose.Schema({
 });
 const DirectMessage = mongoose.model('DirectMessage', directMessageSchema);
 
-// Schema de Grupos
 const groupSchema = new mongoose.Schema({
   name: { type: String, required: true },
   creator: { type: String, required: true },
@@ -55,7 +51,6 @@ const groupSchema = new mongoose.Schema({
 });
 const Group = mongoose.model('Group', groupSchema);
 
-// Schema de Mensagens de Grupo
 const groupMessageSchema = new mongoose.Schema({
   groupId: { type: String, required: true },
   sender: { type: String, required: true },
@@ -64,26 +59,23 @@ const groupMessageSchema = new mongoose.Schema({
 });
 const GroupMessage = mongoose.model('GroupMessage', groupMessageSchema);
 
-// Schema dos Posts (Feed Social com Suporte a Vídeo e Imagem)
 const postSchema = new mongoose.Schema({
   author: { type: String, required: true },
   authorPic: { type: String, default: '' },
   content: { type: String, required: true },
   mediaUrl: { type: String, default: '' },
-  mediaType: { type: String, default: 'image' }, // 'image' ou 'video'
+  mediaType: { type: String, default: 'image' },
   createdAt: { type: Date, default: Date.now }
 });
 const Post = mongoose.model('Post', postSchema);
 
-// --- ROTAS DE AUTENTICAÇÃO E PERFIL ---
+// AUTENTICAÇÃO
 app.post('/api/register', async (req, res) => {
   try {
     const { username, password, profilePic } = req.body;
     if (!username || !password) return res.status(400).json({ error: 'Preencha os campos!' });
-
     const userExists = await User.findOne({ username });
     if (userExists) return res.status(400).json({ error: 'Utilizador já existe!' });
-
     const newUser = new User({ username, password, profilePic: profilePic || '' });
     await newUser.save();
     res.json({ success: true, message: 'Conta criada com sucesso!' });
@@ -96,29 +88,17 @@ app.post('/api/login', async (req, res) => {
   try {
     const { username, password } = req.body;
     const user = await User.findOne({ username, password });
-
     if (!user) return res.status(401).json({ error: 'Utilizador ou palavra-passe incorretos!' });
-
-    res.json({ 
-      success: true, 
-      username: user.username, 
+    res.json({
+      success: true,
+      username: user.username,
       profilePic: user.profilePic,
-      adsWatched: user.adsWatched,
+      adsWatched: Number(user.adsWatched.toFixed(2)),
       balance: user.balance.toFixed(2),
       pixKey: user.pixKey
     });
   } catch (err) {
     res.status(500).json({ error: 'Erro ao fazer login.' });
-  }
-});
-
-app.post('/api/profile/update', async (req, res) => {
-  try {
-    const { username, profilePic } = req.body;
-    const user = await User.findOneAndUpdate({ username }, { profilePic }, { new: true });
-    res.json({ success: true, profilePic: user.profilePic });
-  } catch (err) {
-    res.status(500).json({ error: 'Erro ao atualizar foto de perfil.' });
   }
 });
 
@@ -131,7 +111,7 @@ app.get('/api/users/search/:query', async (req, res) => {
   }
 });
 
-// --- ROTAS DE STORIES ---
+// STORIES
 app.get('/api/stories', async (req, res) => {
   try {
     const stories = await Story.find().sort({ createdAt: -1 });
@@ -145,17 +125,28 @@ app.post('/api/stories', async (req, res) => {
   try {
     const { author, authorPic, mediaUrl, mediaType } = req.body;
     if (!mediaUrl) return res.status(400).json({ error: 'Insira uma mídia para o story.' });
-
     const newStory = new Story({ author, authorPic, mediaUrl, mediaType });
     await newStory.save();
-    io.emit('new_story', newStory);
     res.json({ success: true, story: newStory });
   } catch (err) {
     res.status(500).json({ error: 'Erro ao criar story.' });
   }
 });
 
-// --- ROTAS DE MENSAGENS E GRUPOS ---
+app.delete('/api/stories/:id', async (req, res) => {
+  try {
+    const { author } = req.body;
+    const story = await Story.findById(req.params.id);
+    if (!story) return res.status(404).json({ error: 'Story não encontrado.' });
+    if (story.author !== author) return res.status(403).json({ error: 'Sem permissão.' });
+    await Story.findByIdAndDelete(req.params.id);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao apagar story.' });
+  }
+});
+
+// MENSAGENS E GRUPOS
 app.get('/api/messages/direct/:user1/:user2', async (req, res) => {
   try {
     const { user1, user2 } = req.params;
@@ -165,23 +156,9 @@ app.get('/api/messages/direct/:user1/:user2', async (req, res) => {
         { from: user2, to: user1 }
       ]
     }).sort({ createdAt: 1 });
-
     res.json({ success: true, messages });
   } catch (err) {
     res.status(500).json({ error: 'Erro ao carregar mensagens.' });
-  }
-});
-
-app.post('/api/groups/create', async (req, res) => {
-  try {
-    const { name, creator } = req.body;
-    if (!name || !creator) return res.status(400).json({ error: 'Preencha o nome do grupo.' });
-
-    const newGroup = new Group({ name, creator, members: [creator] });
-    await newGroup.save();
-    res.json({ success: true, group: newGroup });
-  } catch (err) {
-    res.status(500).json({ error: 'Erro ao criar grupo.' });
   }
 });
 
@@ -203,7 +180,7 @@ app.get('/api/groups/messages/:groupId', async (req, res) => {
   }
 });
 
-// --- ROTAS DE FEED & RECOMPENSAS ---
+// POSTS
 app.get('/api/posts', async (req, res) => {
   try {
     const posts = await Post.find().sort({ createdAt: -1 }).limit(30);
@@ -217,31 +194,56 @@ app.post('/api/posts', async (req, res) => {
   try {
     const { author, authorPic, content, mediaUrl, mediaType } = req.body;
     if (!author || !content) return res.status(400).json({ error: 'O conteúdo não pode estar vazio.' });
-
     const newPost = new Post({ author, authorPic, content, mediaUrl, mediaType });
     await newPost.save();
-    io.emit('new_post', newPost);
     res.json({ success: true, post: newPost });
   } catch (err) {
     res.status(500).json({ error: 'Erro ao criar publicação.' });
   }
 });
 
+app.delete('/api/posts/:id', async (req, res) => {
+  try {
+    const { author } = req.body;
+    const post = await Post.findById(req.params.id);
+    if (!post) return res.status(404).json({ error: 'Post não encontrado.' });
+    if (post.author !== author) return res.status(403).json({ error: 'Sem permissão.' });
+    await Post.findByIdAndDelete(req.params.id);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao apagar post.' });
+  }
+});
+
+// ANÚNCIOS MONETAG (Short 5s = +0.75 anúncio | Long 30s = +1.0 anúncio no ciclo)
 app.post('/api/watch-ad', async (req, res) => {
   try {
-    const { username } = req.body;
+    const { username, adType } = req.body; 
     const user = await User.findOne({ username });
     if (!user) return res.status(404).json({ error: 'Utilizador não encontrado.' });
 
-    user.adsWatched += 1;
     let cycleCompleted = false;
+
+    if (adType === 'long') {
+      user.adsWatched += 1.0;  // 30 segundos assistidos = 1.0 anúncio no ciclo
+    } else {
+      user.adsWatched += 0.75; // 5 segundos assistidos = 0.75 de anúncio no ciclo
+    }
+
+    // Ao atingir 10 no ciclo, credita o saldo e reseta a contagem
     if (user.adsWatched >= 10) {
       user.balance += 0.06;
       user.adsWatched = 0;
       cycleCompleted = true;
     }
+
     await user.save();
-    res.json({ success: true, adsWatched: user.adsWatched, balance: user.balance.toFixed(2), cycleCompleted });
+    res.json({ 
+      success: true, 
+      adsWatched: Number(user.adsWatched.toFixed(2)), 
+      balance: user.balance.toFixed(2), 
+      cycleCompleted 
+    });
   } catch (err) {
     res.status(500).json({ error: 'Erro ao contabilizar anúncio.' });
   }
@@ -252,24 +254,20 @@ app.post('/api/request-payout', async (req, res) => {
     const { username, pixKey } = req.body;
     const user = await User.findOne({ username });
     if (!user) return res.status(404).json({ error: 'Utilizador não encontrado.' });
-
     const MIN_PAYOUT = 0.50;
     if (user.balance < MIN_PAYOUT) {
       return res.status(400).json({ error: `Saldo insuficiente! Mínimo: R$ ${MIN_PAYOUT.toFixed(2)}.` });
     }
-
     const amountToPay = user.balance;
     user.balance = 0.00;
     user.pixKey = pixKey;
     await user.save();
-
     res.json({ success: true, message: `Solicitação de saque de R$ ${amountToPay.toFixed(2)} enviada para PIX: ${pixKey}!` });
   } catch (err) {
     res.status(500).json({ error: 'Erro ao processar saque.' });
   }
 });
 
-// --- WEBRTC & SOCKET.IO (MENSAGENS & CHAMADAS DE VÍDEO/TELA) ---
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });
 
@@ -281,25 +279,39 @@ io.on('connection', (socket) => {
   socket.on('send_direct_message', async (data) => {
     const { from, to, text } = data;
     if (!from || !to || !text) return;
-
     const msg = new DirectMessage({ from, to, text });
     await msg.save();
-
     const roomKey = [from, to].sort().join('_');
     io.to(roomKey).emit('receive_direct_message', msg);
+  });
+
+  socket.on('edit_direct_message', async (data) => {
+    const { msgId, newText, from } = data;
+    const msg = await DirectMessage.findById(msgId);
+    if (msg && msg.from === from) {
+      msg.text = newText + ' (editada)';
+      await msg.save();
+      io.emit('message_updated', { msgId, newText: msg.text });
+    }
+  });
+
+  socket.on('delete_direct_message', async (data) => {
+    const { msgId, from } = data;
+    const msg = await DirectMessage.findById(msgId);
+    if (msg && msg.from === from) {
+      await DirectMessage.findByIdAndDelete(msgId);
+      io.emit('message_deleted', msgId);
+    }
   });
 
   socket.on('send_group_message', async (data) => {
     const { groupId, sender, text } = data;
     if (!groupId || !sender || !text) return;
-
     const msg = new GroupMessage({ groupId, sender, text });
     await msg.save();
-
     io.to(groupId).emit('receive_group_message', msg);
   });
 
-  // Sinalização WebRTC para Chamadas de Vídeo e Transmissão de Tela
   socket.on('call_signal', (data) => {
     io.to(data.room).emit('call_signal', data);
   });
@@ -307,3 +319,4 @@ io.on('connection', (socket) => {
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => console.log(`Servidor Elex ativo em http://localhost:${PORT}`));
+
