@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ELEX - Mini App</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <title>ELEX - Web App</title>
     <style>
         * {
             margin: 0;
@@ -15,7 +14,7 @@
         body {
             background-color: #0b0e14;
             color: #ffffff;
-            padding-bottom: 70px; /* Espaço para a barra de navegação inferior */
+            padding-bottom: 70px;
         }
         header {
             display: flex;
@@ -30,12 +29,16 @@
             font-size: 20px;
             letter-spacing: 1px;
         }
-        .username {
-            color: #4facfe;
-            font-size: 14px;
-        }
         .container {
             padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
             display: flex;
             flex-direction: column;
             gap: 20px;
@@ -74,29 +77,49 @@
             cursor: pointer;
             width: 100%;
             margin-top: 10px;
-            transition: opacity 0.2s;
         }
-        .btn:active {
-            opacity: 0.8;
-        }
-        .input-group {
+        /* Estilos do Chat interno */
+        .chat-box {
+            background-color: #121824;
+            border: 1px solid #1f293d;
+            border-radius: 16px;
+            height: 350px;
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            padding: 15px;
+            overflow-y: auto;
+            gap: 10px;
             text-align: left;
+        }
+        .message {
+            padding: 10px 14px;
+            border-radius: 10px;
+            max-width: 80%;
+            font-size: 14px;
+        }
+        .message.bot {
+            background-color: #1f293d;
+            color: #fff;
+            align-self: flex-start;
+        }
+        .message.user {
+            background-color: #00f2fe;
+            color: #0b0e14;
+            align-self: flex-end;
+            font-weight: 500;
+        }
+        .chat-input-area {
+            display: flex;
+            gap: 10px;
             margin-top: 10px;
         }
-        .input-group label {
-            font-size: 13px;
-            color: #8b9bb4;
-        }
-        .input-group input {
-            background-color: #0b0e14;
+        .chat-input-area input {
+            flex: 1;
+            background-color: #121824;
             border: 1px solid #1f293d;
             border-radius: 10px;
             padding: 12px;
             color: #fff;
-            font-size: 14px;
         }
         /* Barra de Navegação Inferior */
         .bottom-nav {
@@ -138,66 +161,50 @@
 
     <header>
         <h1>ELEX</h1>
-        <span class="username" id="userHandle">@Utilizador</span>
+        <span style="color: #4facfe; font-size: 14px;">Painel Web</span>
     </header>
 
     <div class="container">
-        <!-- Cartão Principal de Saldo -->
-        <div class="card">
-            <div class="saldo-title">SALDO ACUMULADO</div>
-            <div class="saldo-value" id="saldoDisplay">R$ 0,00</div>
-            <div class="progresso-text">Progresso no Ciclo: <span id="progressoDisplay">0</span>/30</div>
-            
-            <button class="btn" onclick="assistirAnuncio(1)">⚡ Anúncio Rápido (5s) [+0.05]</button>
+        <!-- ABA HOME -->
+        <div id="tab-home" class="tab-content active">
+            <div class="card">
+                <div class="saldo-title">SALDO ACUMULADO</div>
+                <div class="saldo-value" id="saldoDisplay">R$ 0,00</div>
+                <div class="progresso-text">Progresso no Ciclo: <span id="progressoDisplay">0</span>/30</div>
+                <button class="btn" onclick="assistirAnuncio(1)">⚡ Anúncio Rápido [+0.05]</button>
+            </div>
         </div>
 
-        <!-- Secção PIX -->
-        <div class="card">
-            <div class="input-group">
-                <label>Solicitar Levantamento PIX</label>
-                <input type="text" id="chavePix" placeholder="Chave PIX (CPF, Email, Telefone)">
+        <!-- ABA CHAT (BOT NO SITE) -->
+        <div id="tab-chat" class="tab-content">
+            <div class="chat-box" id="chatMessages">
+                <div class="message bot">Olá! Eu sou o assistente virtual da ELEX. Como posso ajudar hoje?</div>
             </div>
-            <button class="btn" onclick="solicitarPix()">Solicitar Levantamento (Mín. R$ 0,50)</button>
+            <div class="chat-input-area">
+                <input type="text" id="userInput" placeholder="Escreva uma mensagem...">
+                <button class="btn" style="width: auto; margin-top: 0; padding: 0 20px;" onclick="enviarMensagem()">Enviar</button>
+            </div>
         </div>
     </div>
 
-    <!-- Barra de Navegação Inferior Fixa -->
+    <!-- Barra de Navegação Inferior -->
     <nav class="bottom-nav">
-        <button class="nav-item active" onclick="mudarTab('home')">
+        <button class="nav-item active" onclick="mudarTab('home', event)">
             <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
             Home
         </button>
-        <button class="nav-item" onclick="mudarTab('ads')">
-            <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-            Ads
-        </button>
-        <button class="nav-item" onclick="mudarTab('chat')">
+        <button class="nav-item" onclick="mudarTab('chat', event)">
             <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/></svg>
-            Chat
-        </button>
-        <button class="nav-item" onclick="mudarTab('search')">
-            <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-            Search
-        </button>
-        <button class="nav-item" onclick="mudarTab('profile')">
-            <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
-            Profile
+            Chat / Bot
         </button>
     </nav>
 
     <script>
-        const tg = window.Telegram.WebApp;
-        tg.expand();
+        const userId = 'utilizador_web_1';
 
-        const chatId = tg.initDataUnsafe?.user?.id || 123456789; // ID de teste se aberto no browser
-        const username = tg.initDataUnsafe?.user?.username || 'Utilizador';
-        
-        document.getElementById('userHandle').innerText = '@' + username;
-
-        // Carregar dados do utilizador
         async function carregarDados() {
             try {
-                const res = await fetch(`/api/user?chatId=${chatId}`);
+                const res = await fetch(`/api/user?userId=${userId}`);
                 const data = await res.json();
                 document.getElementById('saldoDisplay').innerText = `R$ ${(data.saldo || 0).toFixed(2)}`;
                 document.getElementById('progressoDisplay').innerText = data.progressoCiclo || 0;
@@ -211,7 +218,7 @@
                 const res = await fetch('/api/assistir', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ chatId, progressoInc: qtd })
+                    body: JSON.stringify({ userId, progressoInc: qtd })
                 });
                 const data = await res.json();
                 if (data.success) {
@@ -221,22 +228,42 @@
                     alert(data.message);
                 }
             } catch (err) {
-                alert('Erro ao processar anúncio.');
+                alert('Erro ao processar.');
             }
         }
 
-        function solicitarPix() {
-            const chave = document.getElementById('chavePix').value;
-            if (!chave) {
-                alert('Por favor, insira a sua chave PIX.');
-                return;
-            }
-            alert('Pedido de levantamento enviado com sucesso!');
-        }
-
-        function mudarTab(tabName) {
+        function mudarTab(tabName, event) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+
+            document.getElementById('tab-' + tabName).classList.add('active');
             event.currentTarget.classList.add('active');
+        }
+
+        function enviarMensagem() {
+            const input = document.getElementById('userInput');
+            const texto = input.value.trim();
+            if (!texto) return;
+
+            const chatBox = document.getElementById('chatMessages');
+
+            // Mensagem do utilizador
+            const msgUser = document.createElement('div');
+            msgUser.className = 'message user';
+            msgUser.innerText = texto;
+            chatBox.appendChild(msgUser);
+
+            input.value = '';
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            // Resposta automática do bot no site
+            setTimeout(() => {
+                const msgBot = document.createElement('div');
+                msgBot.className = 'message bot';
+                msgBot.innerText = 'Recebi a sua mensagem: "' + texto + '". Em breve teremos respostas automáticas aqui!';
+                chatBox.appendChild(msgBot);
+                chatBox.scrollTop = chatBox.scrollHeight;
+            }, 1000);
         }
 
         carregarDados();
