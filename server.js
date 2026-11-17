@@ -14,40 +14,73 @@ mongoose.connect(mongoUri)
   .catch(err => console.error('Erro ao conectar ao MongoDB:', err));
 
 const userSchema = new mongoose.Schema({
-  userId: { type: String, unique: true, default: 'user_padrao' },
-  anunciosVistos: { type: Number, default: 0 },
+  username: { type: String, unique: true, required: true },
+  password: { type: String, required: true },
   saldo: { type: Number, default: 0.00 },
   progressoCiclo: { type: Number, default: 0 }
 });
 
 const User = mongoose.model('User', userSchema);
 
-// Rota principal que envia o index.html
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-app.get('/api/user', async (req, res) => {
-  const userId = req.query.userId || 'user_padrao';
+// Rota de Login / Registo Automático
+app.post('/api/auth', async (req, res) => {
+  const { username, password, action } = req.body;
+  if (!username || !password) {
+    return res.json({ success: false, message: 'Preencha todos os campos.' });
+  }
+
   try {
-    let user = await User.findOne({ userId: userId });
-    if (!user) {
-      user = await User.create({ userId: userId, saldo: 0, progressoCiclo: 0 });
+    let user = await User.findOne({ username: username.toLowerCase().trim() });
+
+    if (action === 'register') {
+      if (user) {
+        return res.json({ success: false, message: 'Este utilizador já existe.' });
+      }
+      user = await User.create({
+        username: username.toLowerCase().trim(),
+        password: password,
+        saldo: 0,
+        progressoCiclo: 0
+      });
+      return res.json({ success: true, user });
+    } else {
+      if (!user || user.password !== password) {
+        return res.json({ success: false, message: 'Utilizador ou palavra-passe incorretos.' });
+      }
+      return res.json({ success: true, user });
     }
-    res.json(user);
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Erro no servidor.' });
+  }
+});
+
+// Buscar dados atualizados do utilizador
+app.get('/api/user', async (req, res) => {
+  const username = req.query.username;
+  if (!username) return res.status(400).json({ error: 'Username necessário' });
+
+  try {
+    const user = await User.findOne({ username: username });
+    if (!user) return res.status(404).json({ error: 'Utilizador não encontrado' });
+    res.json({ username: user.username, saldo: user.saldo, progressoCiclo: user.progressoCiclo });
   } catch (err) {
     res.status(500).json({ error: 'Erro ao buscar dados' });
   }
 });
 
+// Assistir anúncio
 app.post('/api/assistir', async (req, res) => {
-  const { userId = 'user_padrao', progressoInc } = req.body;
+  const { username, progressoInc } = req.body;
   const LIMITE_DIARIO = 30;
 
   try {
-    let user = await User.findOne({ userId: userId });
+    let user = await User.findOne({ username: username });
     if (!user) {
-      user = new User({ userId: userId, progressoCiclo: 0, saldo: 0 });
+      return res.json({ success: false, message: 'Sessão inválida. Faça login novamente.' });
     }
 
     if (user.progressoCiclo >= LIMITE_DIARIO) {

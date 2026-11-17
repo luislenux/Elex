@@ -29,11 +29,51 @@
             font-size: 20px;
             letter-spacing: 1px;
         }
+        .logout-btn {
+            background: none;
+            border: 1px solid #1f293d;
+            color: #8b9bb4;
+            padding: 5px 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            cursor: pointer;
+        }
         .container {
             padding: 20px;
             display: flex;
             flex-direction: column;
             gap: 20px;
+        }
+        /* Tela de Login */
+        #auth-screen {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-height: 80vh;
+            padding: 20px;
+        }
+        .auth-card {
+            background-color: #121824;
+            border: 1px solid #1f293d;
+            border-radius: 16px;
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .auth-card h2 {
+            color: #00f2fe;
+            text-align: center;
+            margin-bottom: 5px;
+        }
+        .input-field {
+            background-color: #0b0e14;
+            border: 1px solid #1f293d;
+            border-radius: 10px;
+            padding: 14px;
+            color: #fff;
+            font-size: 14px;
+            width: 100%;
         }
         .tab-content {
             display: none;
@@ -76,9 +116,71 @@
             font-weight: bold;
             cursor: pointer;
             width: 100%;
-            margin-top: 10px;
+            margin-top: 5px;
         }
-        /* Estilos do Chat interno */
+        .btn-secondary {
+            background: transparent;
+            border: 1px solid #1f293d;
+            color: #8b9bb4;
+            border-radius: 12px;
+            padding: 12px;
+            font-size: 14px;
+            cursor: pointer;
+            width: 100%;
+        }
+        /* Stories limpos sem ícones de imagem */
+        .stories-container {
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+        }
+        .story-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+        }
+        .story-ring {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2px;
+        }
+        .story-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: #121824;
+        }
+        .story-name {
+            font-size: 11px;
+            color: #8b9bb4;
+        }
+        .feed-post {
+            background-color: #121824;
+            border: 1px solid #1f293d;
+            border-radius: 16px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .post-header {
+            font-size: 13px;
+            font-weight: bold;
+            color: #00f2fe;
+        }
+        .post-body {
+            font-size: 14px;
+            color: #fff;
+        }
+        /* Estilos do Chat */
         .chat-box {
             background-color: #121824;
             border: 1px solid #1f293d;
@@ -121,13 +223,13 @@
             padding: 12px;
             color: #fff;
         }
-        /* Barra de Navegação Inferior */
+        /* Barra de Navegação Inferior limpa */
         .bottom-nav {
             position: fixed;
             bottom: 0;
             left: 0;
             width: 100%;
-            height: 65px;
+            height: 60px;
             background-color: #121824;
             border-top: 1px solid #1f293d;
             display: flex;
@@ -139,72 +241,157 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: center;
             color: #8b9bb4;
             text-decoration: none;
-            font-size: 11px;
+            font-size: 13px;
+            font-weight: 600;
             background: none;
             border: none;
             cursor: pointer;
+            height: 100%;
+            flex: 1;
         }
         .nav-item.active {
             color: #00f2fe;
+            border-top: 2px solid #00f2fe;
         }
-        .nav-item svg {
-            width: 24px;
-            height: 24px;
-            margin-bottom: 3px;
-            fill: currentColor;
+        .hidden {
+            display: none !important;
         }
     </style>
 </head>
 <body>
 
-    <header>
-        <h1>ELEX</h1>
-        <span style="color: #4facfe; font-size: 14px;">Painel Web</span>
-    </header>
-
-    <div class="container">
-        <!-- ABA HOME -->
-        <div id="tab-home" class="tab-content active">
-            <div class="card">
-                <div class="saldo-title">SALDO ACUMULADO</div>
-                <div class="saldo-value" id="saldoDisplay">R$ 0,00</div>
-                <div class="progresso-text">Progresso no Ciclo: <span id="progressoDisplay">0</span>/30</div>
-                <button class="btn" onclick="assistirAnuncio(1)">⚡ Anúncio Rápido [+0.05]</button>
-            </div>
-        </div>
-
-        <!-- ABA CHAT (BOT NO SITE) -->
-        <div id="tab-chat" class="tab-content">
-            <div class="chat-box" id="chatMessages">
-                <div class="message bot">Olá! Eu sou o assistente virtual da ELEX. Como posso ajudar hoje?</div>
-            </div>
-            <div class="chat-input-area">
-                <input type="text" id="userInput" placeholder="Escreva uma mensagem...">
-                <button class="btn" style="width: auto; margin-top: 0; padding: 0 20px;" onclick="enviarMensagem()">Enviar</button>
-            </div>
+    <!-- TELA DE LOGIN / REGISTO -->
+    <div id="auth-screen">
+        <div class="auth-card">
+            <h2>ELEX</h2>
+            <p style="text-align: center; color: #8b9bb4; font-size: 13px;">Entre na sua conta ou crie uma nova</p>
+            <input type="text" id="authUser" class="input-field" placeholder="Nome de utilizador">
+            <input type="password" id="authPass" class="input-field" placeholder="Palavra-passe">
+            <button class="btn" onclick="autenticar('login')">Entrar</button>
+            <button class="btn-secondary" onclick="autenticar('register')">Criar Nova Conta</button>
         </div>
     </div>
 
-    <!-- Barra de Navegação Inferior -->
-    <nav class="bottom-nav">
-        <button class="nav-item active" onclick="mudarTab('home', event)">
-            <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
-            Home
-        </button>
-        <button class="nav-item" onclick="mudarTab('chat', event)">
-            <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/></svg>
-            Chat / Bot
-        </button>
-    </nav>
+    <!-- APLICAÇÃO PRINCIPAL (Aparece após o login) -->
+    <div id="app-screen" class="hidden">
+        <header>
+            <h1>ELEX</h1>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span id="userHeaderName" style="color: #4facfe; font-size: 13px;"></span>
+                <button class="logout-btn" onclick="sair()">Sair</button>
+            </div>
+        </header>
+
+        <div class="container">
+            <!-- ABA HOME -->
+            <div id="tab-home" class="tab-content active">
+                <div class="card">
+                    <div class="saldo-title">SALDO ACUMULADO</div>
+                    <div class="saldo-value" id="saldoDisplay">R$ 0,00</div>
+                    <div class="progresso-text">Progresso no Ciclo: <span id="progressoDisplay">0</span>/30</div>
+                    <button class="btn" onclick="assistirAnuncio(1)">Anúncio Rápido [+0.05]</button>
+                </div>
+            </div>
+
+            <!-- ABA FEED / STORIES -->
+            <div id="tab-feed" class="tab-content">
+                <div class="stories-container">
+                    <div class="story-item">
+                        <div class="story-ring"><div class="story-avatar"></div></div>
+                        <span class="story-name">Novidades</span>
+                    </div>
+                    <div class="story-item">
+                        <div class="story-ring"><div class="story-avatar"></div></div>
+                        <span class="story-name">Bónus</span>
+                    </div>
+                    <div class="story-item">
+                        <div class="story-ring"><div class="story-avatar"></div></div>
+                        <span class="story-name">VIP</span>
+                    </div>
+                </div>
+
+                <div class="feed-post">
+                    <div class="post-header">@admin_elex</div>
+                    <div class="post-body">Bem-vindo à ELEX! Explore o seu painel, acompanhe as novidades e converse com o assistente no Chat.</div>
+                </div>
+            </div>
+
+            <!-- ABA CHAT -->
+            <div id="tab-chat" class="tab-content">
+                <div class="chat-box" id="chatMessages">
+                    <div class="message bot">Olá! Eu sou o assistente virtual da ELEX. Como posso ajudar?</div>
+                </div>
+                <div class="chat-input-area">
+                    <input type="text" id="userInput" placeholder="Escreva uma mensagem...">
+                    <button class="btn" style="width: auto; margin-top: 0; padding: 0 20px;" onclick="enviarMensagem()">Enviar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Barra de Navegação Inferior -->
+        <nav class="bottom-nav">
+            <button class="nav-item active" onclick="mudarTab('home', event)">Home</button>
+            <button class="nav-item" onclick="mudarTab('feed', event)">Feed</button>
+            <button class="nav-item" onclick="mudarTab('chat', event)">Chat</button>
+        </nav>
+    </div>
 
     <script>
-        const userId = 'utilizador_web_1';
+        let currentUser = localStorage.getItem('elex_user');
+
+        function verificarSessao() {
+            if (currentUser) {
+                document.getElementById('auth-screen').classList.add('hidden');
+                document.getElementById('app-screen').classList.remove('hidden');
+                document.getElementById('userHeaderName').innerText = '@' + currentUser;
+                carregarDados();
+            } else {
+                document.getElementById('auth-screen').classList.remove('hidden');
+                document.getElementById('app-screen').classList.add('hidden');
+            }
+        }
+
+        async function autenticar(action) {
+            const username = document.getElementById('authUser').value.trim();
+            const password = document.getElementById('authPass').value.trim();
+
+            if (!username || !password) {
+                return alert('Preencha o utilizador e a palavra-passe.');
+            }
+
+            try {
+                const res = await fetch('/api/auth', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password, action })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    currentUser = data.user.username;
+                    localStorage.setItem('elex_user', currentUser);
+                    verificarSessao();
+                } else {
+                    alert(data.message);
+                }
+            } catch (err) {
+                alert('Erro de ligação ao servidor.');
+            }
+        }
+
+        function sair() {
+            localStorage.removeItem('elex_user');
+            currentUser = null;
+            verificarSessao();
+        }
 
         async function carregarDados() {
+            if (!currentUser) return;
             try {
-                const res = await fetch(`/api/user?userId=${userId}`);
+                const res = await fetch(`/api/user?username=${currentUser}`);
                 const data = await res.json();
                 document.getElementById('saldoDisplay').innerText = `R$ ${(data.saldo || 0).toFixed(2)}`;
                 document.getElementById('progressoDisplay').innerText = data.progressoCiclo || 0;
@@ -214,11 +401,12 @@
         }
 
         async function assistirAnuncio(qtd) {
+            if (!currentUser) return;
             try {
                 const res = await fetch('/api/assistir', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ userId, progressoInc: qtd })
+                    body: JSON.stringify({ username: currentUser, progressoInc: qtd })
                 });
                 const data = await res.json();
                 if (data.success) {
@@ -247,7 +435,6 @@
 
             const chatBox = document.getElementById('chatMessages');
 
-            // Mensagem do utilizador
             const msgUser = document.createElement('div');
             msgUser.className = 'message user';
             msgUser.innerText = texto;
@@ -256,17 +443,16 @@
             input.value = '';
             chatBox.scrollTop = chatBox.scrollHeight;
 
-            // Resposta automática do bot no site
             setTimeout(() => {
                 const msgBot = document.createElement('div');
                 msgBot.className = 'message bot';
-                msgBot.innerText = 'Recebi a sua mensagem: "' + texto + '". Em breve teremos respostas automáticas aqui!';
+                msgBot.innerText = 'Recebi a sua mensagem, @' + currentUser + ': "' + texto + '".';
                 chatBox.appendChild(msgBot);
                 chatBox.scrollTop = chatBox.scrollHeight;
-            }, 1000);
+            }, 800);
         }
 
-        carregarDados();
+        verificarSessao();
     </script>
 </body>
 </html>
